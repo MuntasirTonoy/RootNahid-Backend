@@ -11,11 +11,15 @@ const getDashboardStats = async (req, res) => {
     const totalUsers = await User.countDocuments();
     const totalCourses = await Course.countDocuments();
     const totalVideos = await Video.countDocuments();
+    const purchasedCourseStudent = await User.countDocuments({
+      purchasedSubjects: { $exists: true, $not: { $size: 0 } },
+    });
 
     res.json({
       totalUsers,
       totalCourses,
       totalVideos,
+      purchasedCourseStudent,
     });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
@@ -45,7 +49,13 @@ const createCourse = async (req, res) => {
     // Update prices in the original Subject collection
     if (subjects && subjects.length > 0) {
       for (const s of subjects) {
-        if (s.subjectId && (s.originalPrice || s.offerPrice)) {
+        if (
+          s.subjectId &&
+          s.originalPrice !== undefined &&
+          s.originalPrice !== null &&
+          s.offerPrice !== undefined &&
+          s.offerPrice !== null
+        ) {
           await Subject.findByIdAndUpdate(s.subjectId, {
             originalPrice: s.originalPrice,
             offerPrice: s.offerPrice,
@@ -78,6 +88,7 @@ const getAllCourses = async (req, res) => {
 // @access  Private/Admin
 const updateCourse = async (req, res) => {
   try {
+    console.log(`Updating course ${req.params.id}`);
     const course = await Course.findById(req.params.id);
 
     if (course) {
@@ -85,16 +96,32 @@ const updateCourse = async (req, res) => {
       course.department = req.body.department || course.department;
       course.yearLevel = req.body.yearLevel || course.yearLevel;
       course.thumbnail = req.body.thumbnail || course.thumbnail;
+
       if (req.body.subjects) {
+        console.log("Updating subjects:", req.body.subjects.length);
         course.subjects = req.body.subjects;
 
         // Update prices in the original Subject collection
         for (const s of req.body.subjects) {
-          if (s.subjectId && (s.originalPrice || s.offerPrice)) {
+          console.log(`Checking subject ${s.subjectId} for price update...`);
+          if (
+            s.subjectId &&
+            s.originalPrice !== undefined &&
+            s.originalPrice !== null &&
+            s.offerPrice !== undefined &&
+            s.offerPrice !== null
+          ) {
+            console.log(
+              `Updating price for subject ${s.subjectId}: ${s.originalPrice} / ${s.offerPrice}`,
+            );
             await Subject.findByIdAndUpdate(s.subjectId, {
               originalPrice: s.originalPrice,
               offerPrice: s.offerPrice,
             });
+          } else {
+            console.log(
+              `Skipping subject ${s.subjectId} - Missing or invalid price data`,
+            );
           }
         }
       }
@@ -282,8 +309,7 @@ const getAllVideos = async (req, res) => {
     console.log("GET /api/admin/videos hit");
     const videos = await Video.find({}).populate({
       path: "subjectId",
-      select: "title courseId",
-      populate: { path: "courseId", select: "title" },
+      populate: { path: "courseId" },
     });
     console.log(`Found ${videos.length} videos`);
     res.json(videos);
