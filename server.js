@@ -20,7 +20,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://rootovereducation.vercel.app",
+      "https://rootover.vercel.app",
       /\.vercel\.app$/, // Allow all Vercel preview/deployment URLs
     ],
     credentials: true,
