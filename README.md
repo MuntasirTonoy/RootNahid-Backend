@@ -10,7 +10,7 @@ This is the Express.js / MongoDB backend for the Root Over Education e-learning 
 
 ## Deployment
 
-- **Backend URL**: [https://root-over-backend.vercel.app](https://root-over-backend.vercel.app)
+- **Backend URL**: [https://root-over-edu-backend.vercel.app](https://root-over-edu-backend.vercel.app)
 - **Frontend URL**: [https://rootovereducation.vercel.app](https://rootovereducation.vercel.app)
 
 ## Setup
