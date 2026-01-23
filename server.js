@@ -43,19 +43,34 @@ app.get("/", (req, res) => {
 });
 
 // Temporary Debug Route (Remove after fixing)
+// Temporary Debug Route (Remove after fixing)
 app.get("/debug-env", (req, res) => {
   const envVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+  let parsed = null;
+  let parseError = null;
+
+  if (envVar) {
+    try {
+      parsed = JSON.parse(envVar);
+    } catch (e) {
+      parseError = e.message;
+    }
+  }
+
   res.json({
-    message: "Debug Info",
+    message: "Debug Info v2",
     hasFirebaseKey: !!envVar,
     keyLength: envVar ? envVar.length : 0,
-    first50Chars: envVar ? envVar.substring(0, 50) : "N/A",
-    nodeEnv: process.env.NODE_ENV,
-    parsed: envVar
-      ? envVar.startsWith("{")
-        ? "Looks like JSON"
-        : "Not JSON"
-      : "N/A",
+    parseSuccess: !!parsed,
+    parseError: parseError,
+    // Check if private_key exists and has correct format (newline handling)
+    hasPrivateKey: parsed ? !!parsed.private_key : false,
+    privateKeyStart:
+      parsed && parsed.private_key
+        ? parsed.private_key.substring(0, 30)
+        : "N/A",
+    privateKeyHasNewlines:
+      parsed && parsed.private_key ? parsed.private_key.includes("\n") : "N/A",
   });
 });
 
